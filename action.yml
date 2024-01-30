@@ -1,0 +1,21 @@
+name: 'Hello World'
+description: 'Greet someone'
+inputs:
+  who:  # id of input
+    description: 'Who to greet'
+    required: true
+    default: 'World'
+  matrix:
+    default: ${{ toJson(matrix) }}
+outputs:
+  random-number:
+    description: "Random number"
+    value: ${{ steps.random-number-generator.outputs.random-number }}
+runs:
+  using: "composite"
+  steps:
+    - run: echo ${{ inputs.matrix }}
+    - run: echo Hello ${{ inputs.who }}.
+    - id: random-number-generator
+      run: echo "random-number=$(echo $RANDOM)"
+    - run: echo "${{ github.action_path }}"
