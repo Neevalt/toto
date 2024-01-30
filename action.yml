@@ -1,0 +1,88 @@
+name: 'Trivy scan'
+description: "Scan repository and / or image to detect CVEs. Allows updating Github's security tab and send alert on slack channels"
+inputs:
+  ref:
+    description: Branch or tag the scan is associated to
+    type: string
+    required: true
+  scan-type: 
+    description: "Type of analysis: 'image' for docker images, 'fs' for files. Defaults to 'fs'"
+    required: false
+    type: choice
+    options: 
+      - fs
+      - image
+    default: fs
+  scan-target:
+    description: Image or folder to analyse. Defaults to respository folder
+    type: string
+    required: false
+    default: '.'
+  upload-sarif:
+    description: Update Github's security tab with results. Defaults to true
+    required: false
+    type: boolean
+    default: true
+  channels:
+    description: Comma separated slack channels to notify scan results. Leave empty to prevent alerts
+    type: string
+    required: false
+  slack-app-token:
+    description: Token used to send messages on slack. Required if 'channels' is set
+    type: string
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        ref: "${{ inputs.ref }}"
+
+    - name: Trivy scan
+      id: trivy-scan
+      shell: bash
+      run: |
+        # Enable aliases
+        shopt -s expand_aliases
+        alias trivy="docker run -v /var/run/docker.sock:/var/run/docker.sock -v $PWD:/results aquasec/trivy"
+
+        vuln-type=$([ ${{ inputs.scan-type }} == 'image' ] && echo 'os' || echo 'vuln')
+
+        # Scan docker image
+        trivy ${{ inputs.scan-type }} --exit-code 42 --scanners vuln --vuln-type "$vuln-type" --format json --output "/results/trivy.json" "${{ inputs.scan-target }}" || output_code=$?
+
+        ls
+        trivy convert --format sarif --output /results/trivy.sarif /results/trivy.json
+
+        if [ $output_code != 42 && $output_code != 0 ]; then
+          exit $output_code
+        fi
+        ls
+
+        trivy convert --format table --output /results/trivy.txt /results/trivy.json
+        ls
+
+        trivy_text_template='{{- $critical := 0 }}{{- $high := 0 }}{{- $medium := 0 }}{{- $low := 0 }}{{- range . }}{{- range .Vulnerabilities }}{{- if  eq .Severity "CRITICAL" }}{{- $critical = add $critical 1 }}{{- end }}{{- if  eq .Severity "HIGH" }}{{- $high = add $high 1 }}{{- end }}{{- if  eq .Severity "MEDIUM" }}{{- $medium = add $medium 1 }}{{- end }}{{- if  eq .Severity "LOW" }}{{- $low = add $low 1 }}{{- end }}{{- end }}{{- end }}{{- if gt $critical 0 }}🔥 Critical: {{ $critical }}{{- end }}{{- if gt $high 0 }} 🔴 High: {{ $high }}{{- end }}{{- if gt $medium 0 }} 🟠 Medium: {{ $medium }}{{- end }}{{- if gt $low 0 }} 🟡 Low: {{ $low }}{{- end }}'
+        echo "TRIVY_IMAGE_TXT=$(trivy convert --format template --template "$trivy_text_template" /results/trivy.json)" >> "$GITHUB_OUTPUT"
+        ls
+
+    - name: Upload sarif
+      if: ${{ inputs.upload-sarif == 'true' }}
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy.sarif'
+        category: ${{ inputs.scan-type }}
+
+    - name: Slack Notification for image
+      if: ${{ inputs.channels != '' && hashFiles('trivy.txt') != '' }}
+      shell: bash
+      run: |
+        curl -F file=@trivy.txt \
+             -F channels=${{ inputs.channels }} \
+             -F initial_comment="Trivy ${{ inputs.scan-type }} scan
+        Found the following CVEs on ref ${{ inputs.ref }}:
+        ${{ steps.trivy-scan.outputs.TRIVY_IMAGE_TXT }}
+             -H "Authorization: Bearer ${{ inputs.slack-app-token }}" \
+             https://slack.com/api/files.upload
