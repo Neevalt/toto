@@ -80,6 +80,6 @@ runs:
              -F channels=${{ inputs.channels }} \
              -F initial_comment="Trivy ${{ inputs.scan-type }} scan
         Found the following CVEs on ref ${{ inputs.ref }}:
-        ${{ steps.trivy-scan.outputs.TRIVY_IMAGE_TXT }}"
+        ${{ steps.trivy-scan.outputs.TRIVY_IMAGE_TXT }}"  \
              -H "Authorization: Bearer ${{ inputs.slack-app-token }}" \
              https://slack.com/api/files.upload
