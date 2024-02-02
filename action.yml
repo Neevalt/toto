@@ -78,8 +78,8 @@ runs:
       run: |
         curl -F file=@trivy.txt \
              -F channels=${{ inputs.channels }} \
-             -F initial_comment="Trivy `${{ inputs.scan-type }}` scan
-        Found the following CVEs on ref `${{ github.ref_name }}`:
+             -F initial_comment="Trivy scan : ${{ inputs.scan-type }}
+        Found the following CVEs on ref : ${{ github.ref_name }}
         ${{ steps.trivy-scan.outputs.TRIVY_IMAGE_TXT }}
         Github's security tab has been updated: ${{ github.server_url }}/${{ github.repository }}/security/code-scanning?query=is:open+ref:${{ github.ref }}" \
              -H "Authorization: Bearer ${{ inputs.slack-app-token }}" \
