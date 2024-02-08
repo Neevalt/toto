@@ -1,5 +1,3 @@
-name: Trivy scan
-
 on:
   workflow_call:
     inputs:
@@ -52,7 +50,6 @@ on:
         type: number
         required: false
         default: 4
-
 
 jobs:
   setup:
