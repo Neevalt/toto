@@ -130,6 +130,8 @@ jobs:
             const mainImage = '${{ inputs.main-image }}';
             const imageRepository = '${{ inputs.branch-respository }}';
 
+            console.log('repo : ', '${{ inputs.main-repository }}');
+
             const images = branches.map(branch => {
               const repository = branch.name === mainBranch ? mainRepository : imageRepository;
               const image = branch.name === mainBranch ? mainImage : imageTemplate.replace('%(date)', `${branch.year}${branch.month}`);
