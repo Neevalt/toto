@@ -60,7 +60,7 @@ jobs:
   setup:
     runs-on: ubuntu-22.04
     outputs:
-      branches-matrix: ${{ steps.branches-matrix.outputs.result }}
+      images-matrix: ${{ steps.images-matrix.outputs.result }}
     steps:
       - name: Validate inputs
         run: |
@@ -151,7 +151,7 @@ jobs:
     needs: setup
     runs-on: ubuntu-22.04
     strategy:
-      matrix:  ${{ needs.setup.outputs.images-matrix }}
+      matrix:  ${{ fromJSON(needs.setup.outputs.images-matrix) }}
     steps:
       - name: Run libraries scan
         uses: Neevalt/Toto@master
