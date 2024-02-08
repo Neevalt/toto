@@ -132,7 +132,7 @@ jobs:
                 ref: branch.name,
                 name: `{repository}:${image}`,
               };
-            }));
+            });
 
             return {
               image: images
