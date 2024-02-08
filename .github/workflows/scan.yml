@@ -73,8 +73,8 @@ jobs:
         with:
           fetch-depth: 1 # with all branches
 
-      - name: Set git refs
-        id: set-refs
+      - name: Set git branches
+        id: set-branches
         run: |
           echo GIT_BRANCHES=$(git branch --remotes --format '%(refname:lstrip=3),') >> $GITHUB_OUTPUT
 
