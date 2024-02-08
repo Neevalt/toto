@@ -16,6 +16,10 @@ on:
         required: false
         type: boolean
         default: true
+      slack-channels:
+        description: Comma separated slack channels to notify scan results. Leave empty to prevent alerts
+        type: string
+        required: false
       branch-regex:
         description: Regex to describe branches pattern to scan. "%(date)" must be used to indicated the YYYYmm position of the release date. For instance "^v%(date)-release$". Main branch is always added. Defaults to "^%(date)$"
         type: string
