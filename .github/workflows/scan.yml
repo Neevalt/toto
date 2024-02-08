@@ -16,10 +16,6 @@ on:
         required: false
         type: boolean
         default: true
-      slack-app-token:
-        description: Token used to send messages on slack. Required if 'channels' is set
-        type: string
-        required: false
       branch-regex:
         description: Regex to describe branches pattern to scan. "%(date)" must be used to indicated the YYYYmm position of the release date. For instance "^v%(date)-release$". Main branch is always added. Defaults to "^%(date)$"
         type: string
@@ -172,7 +168,7 @@ jobs:
           scan-target: ${{ inputs.scan-library-in-image == 'true' && matrix.image.name || inputs.fs-scan-target }}
           upload-sarif: ${{ inputs.upload-sarif }}
           channels: ${{ inputs.slack-channels }}
-          slack-app-token: ${{ inputs.slack-app-token }}
+          # slack-app-token: ${{ secrets.SLACK_APP_TOKEN }}
       
       - name: Run image scan
         uses: Neevalt/Toto@master
@@ -183,4 +179,4 @@ jobs:
           scan-target: ${{ matrix.image.name }}
           upload-sarif: ${{ inputs.upload-sarif }}
           channels: ${{ inputs.slack-channels }}
-          slack-app-token: ${{ inputs.slack-app-token }}
+          # slack-app-token: ${{ inputs.slack-app-token }}
