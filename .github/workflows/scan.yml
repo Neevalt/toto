@@ -1,5 +1,3 @@
-Name: Scan dependencies and docker image, then upload results to Slack
-
 on:
   workflow_call:
     inputs:
