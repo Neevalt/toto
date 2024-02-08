@@ -73,7 +73,7 @@ jobs:
           fi
 
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0 # with all branches
 
@@ -151,7 +151,7 @@ jobs:
     needs: setup
     runs-on: ubuntu-22.04
     strategy:
-      matrix:  ${{ fromJson(needs.setup.outputs.images-matrix) }}
+      matrix:  ${{ needs.setup.outputs.images-matrix }}
     steps:
       - name: Run libraries scan
         uses: Neevalt/Toto@master
