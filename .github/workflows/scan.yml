@@ -62,7 +62,7 @@ jobs:
     outputs:
       branches-matrix: ${{ steps.branches-matrix.outputs.result }}
     steps:
-      - Name: Validate inputs
+      - name: Validate inputs
         run: |
           if [[ "${{ inputs.branch-regex }}" != *"%(date)"* ]]; then
             echo "::error::Input 'ref-template' must contain '%(date)'"
@@ -72,7 +72,7 @@ jobs:
             echo "::error::Input 'ref-template' must contain '%(date)'"
           fi
 
-      - Name: Checkout repository
+      - name: Checkout repository
         uses: actions/checkout@v3
         with:
           fetch-depth: 1 # with all branches
