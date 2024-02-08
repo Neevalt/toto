@@ -36,15 +36,15 @@ on:
         required: false
         default: dev
       main-repository:
-        description: Docker image repository for main branch. Defaults to "quay.io/evooq/${{ github.repository }}"
+        description: Docker image repository for main branch. Defaults to "quay.io/${{ github.repository }}"
         type: string
         required: false
-        default: "quay.io/evooq/${{ github.repository }}"
+        default: "quay.io/${{ github.repository }}"
       branch-repository:
-        description: Docker image repository for branches. Defaults to "quay.io/evooq/${{ github.repository }}-branch"
+        description: Docker image repository for branches. Defaults to "quay.io/${{ github.repository }}-branch"
         type: string
         required: false
-        default: "quay.io/evooq/${{ github.repository }}-branch"
+        default: "quay.io/${{ github.repository }}-branch"
       lts-period:
         description: Number of months supported
         type: number
@@ -149,7 +149,7 @@ jobs:
     strategy:
       matrix:  ${{ fromJson(needs.setup.outputs.branches-matrix) }}
     steps:
-      - run: echo branch ${{ matrix.ref.name }}
+      - run: echo branch ${{ matrix.branch.name }}
 
   scan-images:
     needs: setup
