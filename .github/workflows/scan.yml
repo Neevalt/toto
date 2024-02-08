@@ -60,11 +60,11 @@ jobs:
     steps:
       - Name: Validate inputs
         run: |
-          if [[ ${{ inputs.branch-regex }} != *"%(date)"* ]]; then
+          if [[ "${{ inputs.branch-regex }}" != *"%(date)"* ]]; then
             echo "::error::Input 'ref-template' must contain '%(date)'"
           fi
 
-          if [[ ${{ inputs.image-template }} != *"%(date)"* ]]; then
+          if [[ "${{ inputs.image-template }}" != *"%(date)"* ]]; then
             echo "::error::Input 'ref-template' must contain '%(date)'"
           fi
 
