@@ -1,15 +1,21 @@
 on:
   workflow_call:
+    secrets:
+      CONTAINER_REGISTRY_USER:
+        description: Docker registry user
+        required: true
+      CONTAINER_REGISTRY_TOKEN:
+        description: Docker registry token
+        required: true
+      SLACK_APP_TOKEN:
+        description: Token used to send messages on slack. Required if 'channels' is set
+        required: false
     inputs:
       upload-sarif:
         description: Update Github's security tab with results. Defaults to true
         required: false
         type: boolean
         default: true
-      slack-channels:
-        description: Comma separated slack channels to notify scan results. Leave empty to prevent alerts
-        type: string
-        required: false
       slack-app-token:
         description: Token used to send messages on slack. Required if 'channels' is set
         type: string
