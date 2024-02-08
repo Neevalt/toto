@@ -80,7 +80,7 @@ jobs:
         with:
           script: |
             const branchRegex = '{{ inputs.branch-regex }}';
-            const ltsPeriod = Number.parseInt("${{ input.lts-period }}");
+            const ltsPeriod = Number.parseInt("${{ inputs.lts-period }}");
             let gitBranches = "${{ steps.set-branches.outputs.GIT_BRANCHES }}".split(',').map(branch => branch.trim());
 
             const regex = new RegExp(`^${branchRegex.replace('%(date)', '(\\d{4})(\\d{2})')}$`);
