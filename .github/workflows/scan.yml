@@ -115,7 +115,7 @@ jobs:
             }, []);
 
             return {
-              branch: [...branches, { name: '{{ inputs.main-branch }}'}],
+              branch: [...branches, { name: '${{ inputs.main-branch }}' }],
             };
 
       - name: Set images matrix
