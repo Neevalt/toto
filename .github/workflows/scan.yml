@@ -123,14 +123,19 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const imageTemplate = '{{ inputs.image-template }}';
+            const imageTemplate = '${{ inputs.image-template }}';
             const branches = ${{ steps.branches-matrix.outputs.result }}.branch;
+            const mainBranch = '${{ inputs.main-branch }}';
+            const mainRepository = '${{ inputs.main-repository }}';
+            const mainImage = '${{ inputs.main-image }}';
+            const imageRepository = '${{ inputs.branch-respository }}';
+            
             const images = branches.map(branch => {
-              const repository = branch.name === '{{ inputs.main-branch }}' ? '{{ inputs.main-repository }}' : '{{ inputs.branch-respository }}';
-              const image = branch.name === '{{ inputs.main-branch }}' ? '{{ inputs.main-image }}' : imageTemplate.replace('%(date)', `${branch.year}${branch.month}`);
+              const repository = branch.name === mainBranch ? mainRepository : imageRepository;
+              const image = branch.name === mainBranch ? mainImage : imageTemplate.replace('%(date)', `${branch.year}${branch.month}`);
               return {
                 ref: branch.name,
-                name: `{repository}:${image}`,
+                name: `${repository}:${image}`,
               };
             });
 
