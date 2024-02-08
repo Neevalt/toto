@@ -1,7 +1,7 @@
 on:
   workflow_call:
     inputs:
-       upload-sarif:
+      upload-sarif:
         description: Update Github's security tab with results. Defaults to true
         required: false
         type: boolean
