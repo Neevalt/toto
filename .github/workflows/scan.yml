@@ -1,3 +1,5 @@
+Name: Scan dependencies and docker image, then upload results to Slack
+
 on:
   workflow_call:
     inputs:
@@ -55,11 +57,6 @@ on:
         type: number
         required: false
         default: 4
-      upload-sarif:
-        description: Update Github repository's security tab with scan
-        type: boolean
-        required: false
-        default: true
 
 jobs:
   setup:
