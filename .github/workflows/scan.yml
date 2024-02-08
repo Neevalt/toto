@@ -6,7 +6,7 @@ on:
         required: false
         type: boolean
         default: true
-      channels:
+      slack-channels:
         description: Comma separated slack channels to notify scan results. Leave empty to prevent alerts
         type: string
         required: false
@@ -16,15 +16,20 @@ on:
         required: false
         default: "^%(date)$"
       image-template:
-        description: Template to describe images to scan. Unlike branch-regex, it should be an exact match. "%(date)" must be used to indicated the YYYYmm position of the release date. For instance "B-%(date)-release". Defaults to "%(date)"
+        description: Template to describe images to scan. It is not a regex and should be an exact match. "%(date)" must be used to indicated the YYYYmm position of the release date. For instance "B-%(date)-release". Defaults to "%(date)"
         type: string
         required: false
         default: "%(date)"
-      image-only:
-        description: Wether both 'fs' and 'image' scans should be both executed in the docker image or have 'fs' scan executed in the repository. Defaults to 'false'.
+      scan-library-in-image:
+        description: Wether both 'library' and 'os' scans should be both executed in the docker image or have 'library' scan executed in the repository. Defaults to 'false'.
         type: boolean
         required: false
         default: false
+      fs-scan-target:
+        description: If 'scan-library-in-image' is set to 'false', target to scan libraries using the 'fs' mode. Defaults to repository directory.
+        type: string
+        required: false
+        default: "."
       main-branch:
         description: Name of the main branch
         type: string
@@ -50,13 +55,17 @@ on:
         type: number
         required: false
         default: 4
+      upload-sarif:
+        description: Update Github repository's security tab with scan
+        type: boolean
+        required: false
+        default: true
 
 jobs:
   setup:
     runs-on: ubuntu-22.04
     outputs:
       branches-matrix: ${{ steps.branches-matrix.outputs.result }}
-      images-matrix: ${{ steps.images-matrix.outputs.result }}
     steps:
       - Name: Validate inputs
         run: |
@@ -73,20 +82,19 @@ jobs:
         with:
           fetch-depth: 1 # with all branches
 
-      - name: Set git branches
-        id: set-branches
+      - name: Output git branches
+        id: output-branches
         run: |
           echo GIT_BRANCHES=$(git branch --remotes --format '%(refname:lstrip=3),') >> $GITHUB_OUTPUT
 
-      - name: Set branch matrix
+      - name: Set branches
         uses: actions/github-script@v7
-        id: branches-matrix
+        id: set-branches
         with:
           script: |
             const branchRegex = '${{ inputs.branch-regex }}';
             const ltsPeriod = Number.parseInt("${{ inputs.lts-period }}");
-            let gitBranches = "${{ steps.set-branches.outputs.GIT_BRANCHES }}".split(',').map(branch => branch.trim());
-            console.log(gitBranches);
+            const gitBranches = "${{ steps.output-branches.outputs.GIT_BRANCHES }}".split(',').map(branch => branch.trim());
 
             const regex = new RegExp(`${branchRegex.replace('%(date)', '(\\d{4})(\\d{2})')}`);
             const matches = gitBranches.map(ref => ref.match(regex)).filter(result => !!result);
@@ -123,13 +131,11 @@ jobs:
         with:
           script: |
             const imageTemplate = '${{ inputs.image-template }}';
-            const branches = ${{ steps.branches-matrix.outputs.result }}.branch;
+            const branches = ${{ steps.set-branches.outputs.result }}.branch;
             const mainBranch = '${{ inputs.main-branch }}';
             const mainRepository = '${{ inputs.main-repository }}';
             const mainImage = '${{ inputs.main-image }}';
             const branchRepository = '${{ inputs.branch-repository }}';
-
-            console.log('repo : ', '${{ inputs.image-repository }}');
 
             const images = branches.map(branch => {
               const repository = branch.name === mainBranch ? mainRepository : branchRepository;
@@ -148,14 +154,26 @@ jobs:
     needs: setup
     runs-on: ubuntu-22.04
     strategy:
-      matrix:  ${{ fromJson(needs.setup.outputs.branches-matrix) }}
-    steps:
-      - run: echo branch ${{ matrix.branch.name }}
-
-  scan-images:
-    needs: setup
-    runs-on: ubuntu-22.04
-    strategy:
       matrix:  ${{ fromJson(needs.setup.outputs.images-matrix) }}
     steps:
-      - run: echo image ${{ matrix.image.name }}
+      - name: Run libraries scan
+        uses: Neevalt/Toto@master
+        with:
+          ref: ${{ matrix.image.ref }}
+          scan-type: ${{ inputs.scan-library-in-image == 'true' && 'image' || 'fs' }}
+          vuln-type: library
+          scan-target: ${{ inputs.scan-library-in-image == 'true' && matrix.image.name || inputs.fs-scan-target }}
+          upload-sarif: ${{ inputs.upload-sarif }}
+          channels: ${{ inputs.slack-channels }}
+          slack-app-token: ${{ secrets.SLACK_APP_TOKEN }}
+      
+      - name: Run image scan
+        uses: Neevalt/Toto@master
+        with:
+          ref: ${{ matrix.image.ref }}
+          scan-type: image
+          vuln-type: os
+          scan-target: ${{ matrix.image.name }}
+          upload-sarif: ${{ inputs.upload-sarif }}
+          channels: ${{ inputs.slack-channels }}
+          slack-app-token: ${{ secrets.SLACK_APP_TOKEN }}

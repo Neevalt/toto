@@ -32,7 +32,7 @@ inputs:
     required: false
     type: boolean
     default: true
-  channels:
+  slack-channels:
     description: Comma separated slack channels to notify scan results. Leave empty to prevent alerts
     type: string
     required: false
@@ -91,10 +91,10 @@ runs:
       uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: 'trivy.sarif'
-        category: ${{ inputs.scan-type }}
+        category: ${{ inputs.vuln-type }}
 
     - name: Slack Notification
-      if: ${{ inputs.channels != '' && hashFiles('trivy.txt') != '' }}
+      if: ${{ inputs.slack-channels != '' && hashFiles('trivy.txt') != '' }}
       shell: bash
       run: |
         if [ ${{ inputs.upload-sarif }} == 'true' ]; then
@@ -104,7 +104,7 @@ runs:
           ref_message="for ref '${{ inputs.ref }}'"
         fi
         curl -F file=@trivy.txt \
-             -F channels=${{ inputs.channels }} \
+             -F channels=${{ inputs.slack-channels }} \
              -F initial_comment="Trivy scan : ${{ inputs.scan-type }}
         Found the following CVEs on repository '${{ github.repository }}' $ref_message
         ${{ steps.trivy-scan.outputs.TRIVY_IMAGE_TXT }}
