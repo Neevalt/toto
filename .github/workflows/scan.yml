@@ -88,7 +88,7 @@ jobs:
             let gitBranches = "${{ steps.set-branches.outputs.GIT_BRANCHES }}".split(',').map(branch => branch.trim());
 
             const regex = new RegExp(`^${branchRegex.replace('%(date)', '(\\d{4})(\\d{2})')}$`);
-            const matches = gitRefs.map(ref => ref.match(regex)).filter(result => !!result);
+            const matches = gitBranches.map(ref => ref.match(regex)).filter(result => !!result);
 
             if (matches.length === 0) {
               throw new Error(`No matching ref was found`);
