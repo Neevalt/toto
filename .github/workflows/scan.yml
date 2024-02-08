@@ -41,12 +41,12 @@ on:
         required: false
         default: dev
       main-repository:
-        description: Docker image repository for main branch. Defaults to "quay.io/${{ github.repository }}"
+        description: Docker image repository for main branch. Defaults to "quay.io/{current-organization}/{current-repository}"
         type: string
         required: false
         default: "quay.io/${{ github.repository }}"
       branch-repository:
-        description: Docker image repository for branches. Defaults to "quay.io/${{ github.repository }}-branch"
+        description: Docker image repository for branches. Defaults to "quay.io/{current-organization}/{current-repository}-branch"
         type: string
         required: false
         default: "quay.io/${{ github.repository }}-branch"
