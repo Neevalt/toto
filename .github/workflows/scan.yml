@@ -89,7 +89,6 @@ jobs:
             console.log(gitBranches);
 
             const regex = new RegExp(`${branchRegex.replace('%(date)', '(\\d{4})(\\d{2})')}`);
-            console.log(`${branchRegex.replace('%(date)', '(\\d{4})(\\d{2})')}`);
             const matches = gitBranches.map(ref => ref.match(regex)).filter(result => !!result);
 
             if (matches.length === 0) {
@@ -128,12 +127,12 @@ jobs:
             const mainBranch = '${{ inputs.main-branch }}';
             const mainRepository = '${{ inputs.main-repository }}';
             const mainImage = '${{ inputs.main-image }}';
-            const imageRepository = '${{ inputs.branch-respository }}';
+            const branchRepository = '${{ inputs.branch-repository }}';
 
-            console.log('repo : ', '${{ inputs.main-repository }}');
+            console.log('repo : ', '${{ inputs.image-repository }}');
 
             const images = branches.map(branch => {
-              const repository = branch.name === mainBranch ? mainRepository : imageRepository;
+              const repository = branch.name === mainBranch ? mainRepository : branchRepository;
               const image = branch.name === mainBranch ? mainImage : imageTemplate.replace('%(date)', `${branch.year}${branch.month}`);
               return {
                 ref: branch.name,
