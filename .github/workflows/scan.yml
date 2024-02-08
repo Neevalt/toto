@@ -1,0 +1,155 @@
+name: Trivy scan
+
+on:
+  workflow_call:
+    inputs:
+       upload-sarif:
+        description: Update Github's security tab with results. Defaults to true
+        required: false
+        type: boolean
+        default: true
+      channels:
+        description: Comma separated slack channels to notify scan results. Leave empty to prevent alerts
+        type: string
+        required: false
+      branch-regex:
+        description: Regex to describe branches pattern to scan. "%(date)" must be used to indicated the YYYYmm position of the release date. For instance "^v%(date)-release$". Main branch is always added. Defaults to "^%(date)$"
+        type: string
+        required: false
+        default: "^%(date)$"
+      image-only:
+        description: Wether both 'fs' and 'image' scans should be both executed in the docker image or have 'fs' scan executed in the repository. Defaults to 'false'.
+        type: boolean
+        required: false
+        default: false
+      image-template:
+        description: Template to describe images to scan. Unlike branch-regex, it should be an exact match. "%(date)" must be used to indicated the YYYYmm position of the release date. For instance "B-%(date)-release". Defaults to "%(date)"
+        type: string
+        required: false
+        default: "%(date)"
+      main-branch:
+        description: Name of the main branch
+        type: string
+        required: false
+        default: master
+      main-image:
+        description: Name of the image corresponding to main branch
+        type: string
+        required: false
+        default: dev
+      main-repository:
+        description: Docker image repository for main branch. Defaults to "quay.io/evooq/${{ github.repository }}"
+        type: string
+        required: false
+        default: "quay.io/evooq/${{ github.repository }}"
+      branch-repository:
+        description: Docker image repository for branches. Defaults to "quay.io/evooq/${{ github.repository }}-branch"
+        type: string
+        required: false
+        default: "quay.io/evooq/${{ github.repository }}-branch"
+      lts-period:
+        description: Number of months supported
+        type: number
+        required: false
+        default: 4
+
+
+# If several pushes are made on a single branch, only build once at the time, not all the commits in parallel.
+concurrency: ci-${{ github.ref }}
+
+jobs:
+  setup:
+    runs-on: ubuntu-22.04
+    outputs:
+      branches-matrix: ${{ steps.branches-matrix.outputs.result }}
+      images-matrix: ${{ steps.images-matrix.outputs.result }}
+    steps:
+      - Name: Validate inputs
+        run: |
+          if [[ ${{ inputs.ref-template }} != *"%(date)"* ]]; then
+            echo "::error::Input 'ref-template' must contain '%(date)'"
+          fi
+
+      - Name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1 # with all branches
+
+      - name: Set git refs
+        id: set-refs
+        run: |
+          echo GIT_REFS=$(git branch --remotes --format '%(refname:lstrip=3),') >> $GITHUB_OUTPUT
+
+      - name: Set branch matrix
+        uses: actions/github-script@v7
+        id: branches-matrix
+        with:
+          script: |
+            const branchRegex = '{{ inputs.branch-regex }}';
+            const ltsPeriod = Number.parseInt("${{ input.lts-period }}");
+            let gitBranches = "${{ steps.set-branches.outputs.GIT_BRANCHES }}".split(',').map(branch => branch.trim());
+
+            const regex = new RegExp(`^${branchRegex.replace('%(date)', '(\\d{4})(\\d{2})')}$`);
+            const matches = gitRefs.map(ref => ref.match(regex)).filter(result => !!result);
+
+            if (matches.length === 0) {
+              throw new Error(`No matching ref was found`);
+            }
+
+            const branches = matches.reduce((acc, match) => {
+              const year = Number.parseInt(match[1]);
+              const month = Number.parseInt(match[2]);
+              const currentYear = new Date().getFullYear();
+              const currentMonth = new Date().getMonth() + 1;
+              const totalMonths = year * 12 + month;
+              const totalCurrentMonths = currentYear * 12 + currentMonth;
+
+              if (totalCurrentMonths - totalMonths <= ltsPeriod) {
+                acc.push({
+                  name: match[0],
+                  year,
+                  month,
+                });
+              }
+              return acc;
+            }, []);
+
+            return {
+              branch: [...branches, { name: '{{ inputs.main-branch }}'}],
+            };
+
+      - name: Set images matrix
+        id: images-matrix
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const imageTemplate = '{{ inputs.image-template }}';
+            const branches = ${{ steps.branches-matrix.outputs.result }}.branch;
+            const images = branches.map(branch => {
+              const repository = branch.name === '{{ inputs.main-branch }}' ? '{{ inputs.main-repository }}' : '{{ inputs.branch-respository }}';
+              const image = branch.name === '{{ inputs.main-branch }}' ? '{{ inputs.main-image }}' : imageTemplate.replace('%(date)', `${branch.year}${branch.month}`);
+              return {
+                ref: branch.name,
+                name: `{repository}:${image}`,
+              };
+            }));
+
+            return {
+              image: images
+            };
+  
+  scan-branches:
+    needs: setup
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:  ${{ fromJson(needs.setup.outputs.branches-matrix) }}
+    steps:
+      - run: echo ${{ matrix.ref }}
+
+  scan-images:
+    needs: setup
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:  ${{ fromJson(needs.setup.outputs.images-matrix) }}
+    steps:
+      - run: echo ${{ matrix.image.name }}
