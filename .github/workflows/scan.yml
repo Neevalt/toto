@@ -54,9 +54,6 @@ on:
         default: 4
 
 
-# If several pushes are made on a single branch, only build once at the time, not all the commits in parallel.
-concurrency: ci-${{ github.ref }}
-
 jobs:
   setup:
     runs-on: ubuntu-22.04
