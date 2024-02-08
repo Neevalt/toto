@@ -86,6 +86,7 @@ jobs:
             const branchRegex = '${{ inputs.branch-regex }}';
             const ltsPeriod = Number.parseInt("${{ inputs.lts-period }}");
             let gitBranches = "${{ steps.set-branches.outputs.GIT_BRANCHES }}".split(',').map(branch => branch.trim());
+            console.log(gitBranches);
 
             const regex = new RegExp(`${branchRegex.replace('%(date)', '(\\d{4})(\\d{2})')}`);
             console.log(`${branchRegex.replace('%(date)', '(\\d{4})(\\d{2})')}`);
