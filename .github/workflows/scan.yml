@@ -129,7 +129,7 @@ jobs:
             const mainRepository = '${{ inputs.main-repository }}';
             const mainImage = '${{ inputs.main-image }}';
             const imageRepository = '${{ inputs.branch-respository }}';
-            
+
             const images = branches.map(branch => {
               const repository = branch.name === mainBranch ? mainRepository : imageRepository;
               const image = branch.name === mainBranch ? mainImage : imageTemplate.replace('%(date)', `${branch.year}${branch.month}`);
@@ -149,7 +149,7 @@ jobs:
     strategy:
       matrix:  ${{ fromJson(needs.setup.outputs.branches-matrix) }}
     steps:
-      - run: echo ${{ matrix.ref }}
+      - run: echo branch ${{ matrix.ref.name }}
 
   scan-images:
     needs: setup
@@ -157,4 +157,4 @@ jobs:
     strategy:
       matrix:  ${{ fromJson(needs.setup.outputs.images-matrix) }}
     steps:
-      - run: echo ${{ matrix.image.name }}
+      - run: echo image ${{ matrix.image.name }}
