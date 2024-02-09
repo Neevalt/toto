@@ -84,7 +84,7 @@ runs:
 
         echo "$output_code"
         if [[ $output_code != 42 && $output_code != 0 ]]; then
-          echo padbol
+          echo padbol "$output_code" titi
           exit $output_code
         fi
 
