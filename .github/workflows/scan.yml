@@ -87,8 +87,6 @@ jobs:
         with:
           fetch-depth: 0 # with all branches
 
-      - run: git branch --remotes --format '%(refname:lstrip=3),'
-
       - name: Output git branches
         id: output-branches
         run: |
