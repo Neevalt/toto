@@ -82,7 +82,9 @@ runs:
         # Scan docker image
         trivy ${{ inputs.scan-type }} --exit-code 42 --scanners vuln --vuln-type ${{ inputs.vuln-type }} --format json --output "/results/trivy.json" ${{ inputs.scan-target }} || output_code=$?
 
+        echo "$output_code"
         if [[ $output_code != 42 && $output_code != 0 ]]; then
+          echo padbol
           exit $output_code
         fi
 
