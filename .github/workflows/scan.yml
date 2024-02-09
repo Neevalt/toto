@@ -121,8 +121,8 @@ jobs:
               if (totalCurrentMonths - totalMonths <= ltsPeriod) {
                 acc.push({
                   name: match[0],
-                  year,
-                  month,
+                  year: match[1],
+                  month: match[2],
                 });
               }
               return acc;
