@@ -35,7 +35,7 @@ inputs:
       - os,library
     default: library
   scan-target:
-    description: Image or folder to analyse. Defaults to respository folder
+    description: Folder or docker image to scan. Defaults to respository folder
     type: string
     required: false
     default: '.'
