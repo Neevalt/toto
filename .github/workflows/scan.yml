@@ -157,7 +157,7 @@ jobs:
               image: images
             };
   
-  scan-branches:
+  scans:
     needs: setup
     runs-on: ubuntu-22.04
     strategy:
@@ -172,7 +172,7 @@ jobs:
           scan-target: ${{ inputs.scan-library-in-image == 'true' && matrix.image.name || inputs.fs-scan-target }}
           upload-sarif: ${{ inputs.upload-sarif }}
           channels: ${{ inputs.slack-channels }}
-          # slack-app-token: ${{ secrets.SLACK_APP_TOKEN }}
+          slack-app-token: ${{ secrets.SLACK_APP_TOKEN }}
       
       - name: Run image scan
         uses: Neevalt/Toto@master

@@ -1,6 +1,18 @@
 name: 'Trivy scan'
 description: "Scan repository and / or image to detect CVEs. Allows updating Github's security tab and send alert on slack channels"
 inputs:
+  CONTAINER_REGISTRY_USER:
+    description: Docker registry user
+    type: string
+    required: true
+  CONTAINER_REGISTRY_TOKEN:
+    description: Docker registry token
+    type: string
+    required: true
+  SLACK_APP_TOKEN:
+    description: Token used to send messages on slack. Required if 'channels' is set
+    type: string
+    required: false
   ref:
     description: Branch or tag the scan is associated to. Required if using 'fs' scan-type and / or uploading sarif.
     type: string
@@ -36,10 +48,6 @@ inputs:
     description: Comma separated slack channels to notify scan results. Leave empty to prevent alerts
     type: string
     required: false
-  slack-app-token:
-    description: Token used to send messages on slack. Required if 'channels' is set
-    type: string
-    required: false
 
 runs:
   using: "composite"
@@ -55,8 +63,8 @@ runs:
       uses: docker/login-action@v3
       with:
         registry: quay.io
-        username: ${{ secrets.CONTAINER_REGISTRY_USER }}
-        password: ${{ secrets.CONTAINER_REGISTRY_TOKEN }}
+        username: ${{ inputs.CONTAINER_REGISTRY_USER }}
+        password: ${{ inputs.CONTAINER_REGISTRY_TOKEN }}
 
     - name: Pull docker image
       if: ${{ inputs.scan-type == 'image' }}
@@ -109,5 +117,5 @@ runs:
         Found the following CVEs on repository '${{ github.repository }}' $ref_message
         ${{ steps.trivy-scan.outputs.TRIVY_IMAGE_TXT }}
         $tab_message" \
-             -H "Authorization: Bearer ${{ inputs.slack-app-token }}" \
+             -H "Authorization: Bearer ${{ inputs.SLACK_APP_TOKEN }}" \
              https://slack.com/api/files.upload
