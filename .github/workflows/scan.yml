@@ -171,7 +171,7 @@ jobs:
           vuln-type: library
           scan-target: ${{ inputs.scan-library-in-image == 'true' && matrix.image.name || inputs.fs-scan-target }}
           upload-sarif: ${{ inputs.upload-sarif }}
-          channels: ${{ inputs.slack-channels }}
+          slack-channels: ${{ inputs.slack-channels }}
           CONTAINER_REGISTRY_USER: ${{ secrets.CONTAINER_REGISTRY_USER }}
           CONTAINER_REGISTRY_TOKEN: ${{ secrets.CONTAINER_REGISTRY_TOKEN }}
           SLACK_APP_TOKEN: ${{ secrets.SLACK_APP_TOKEN }}
@@ -184,7 +184,7 @@ jobs:
           vuln-type: os
           scan-target: ${{ matrix.image.name }}
           upload-sarif: ${{ inputs.upload-sarif }}
-          channels: ${{ inputs.slack-channels }}
+          slack-channels: ${{ inputs.slack-channels }}
           CONTAINER_REGISTRY_USER: ${{ secrets.CONTAINER_REGISTRY_USER }}
           CONTAINER_REGISTRY_TOKEN: ${{ secrets.CONTAINER_REGISTRY_TOKEN }}
           SLACK_APP_TOKEN: ${{ secrets.SLACK_APP_TOKEN }}
