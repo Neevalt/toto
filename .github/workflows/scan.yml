@@ -172,7 +172,9 @@ jobs:
           scan-target: ${{ inputs.scan-library-in-image == 'true' && matrix.image.name || inputs.fs-scan-target }}
           upload-sarif: ${{ inputs.upload-sarif }}
           channels: ${{ inputs.slack-channels }}
-          slack-app-token: ${{ secrets.SLACK_APP_TOKEN }}
+          CONTAINER_REGISTRY_USER: ${{ secrets.CONTAINER_REGISTRY_USER }}
+          CONTAINER_REGISTRY_TOKEN: ${{ secrets.CONTAINER_REGISTRY_TOKEN }}
+          SLACK_APP_TOKEN: ${{ secrets.SLACK_APP_TOKEN }}
       
       - name: Run image scan
         uses: Neevalt/Toto@master
@@ -183,4 +185,6 @@ jobs:
           scan-target: ${{ matrix.image.name }}
           upload-sarif: ${{ inputs.upload-sarif }}
           channels: ${{ inputs.slack-channels }}
-          # slack-app-token: ${{ inputs.slack-app-token }}
+          CONTAINER_REGISTRY_USER: ${{ secrets.CONTAINER_REGISTRY_USER }}
+          CONTAINER_REGISTRY_TOKEN: ${{ secrets.CONTAINER_REGISTRY_TOKEN }}
+          SLACK_APP_TOKEN: ${{ secrets.SLACK_APP_TOKEN }}
