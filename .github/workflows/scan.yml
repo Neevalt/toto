@@ -199,7 +199,7 @@ jobs:
       - name: Run libraries scan
         uses: Neevalt/Toto@master
         with:
-          ref: ${{ matrix.image.ref }}
+          # ref: ${{ matrix.image.ref }}
           scan-type: ${{ inputs.scan-library-in-image == 'true' && 'image' || 'fs' }}
           vuln-type: library
           scan-target: ${{ inputs.scan-library-in-image == 'true' && matrix.image.name || inputs.fs-scan-target }}
@@ -212,7 +212,7 @@ jobs:
       - name: Run image scan
         uses: Neevalt/Toto@master
         with:
-          ref: ${{ matrix.image.ref }}
+          # ref: ${{ matrix.image.ref }}
           scan-type: image
           vuln-type: os
           scan-target: ${{ matrix.image.name }}
