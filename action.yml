@@ -125,7 +125,7 @@ runs:
       id: set-ref-and-sha
       shell: bash
       run: |
-        echo "ref=ref/$(git describe --all)" >> $GITHUB_OUTPUT
+        echo "ref=refs/$(git describe --all)" >> $GITHUB_OUTPUT
         echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
 
     - name: Upload sarif
@@ -142,7 +142,7 @@ runs:
       shell: bash
       run: |
         if [[ '${{ inputs.upload-sarif }}' == 'true' ]]; then
-          tab_message="Github's security tab has been updated: ${{ github.server_url }}/${{ github.repository }}/security/code-scanning?query=is:open+ref:refs/${{ steps.set-ref.outputs.ref }}"
+          tab_message="Github's security tab has been updated: ${{ github.server_url }}/${{ github.repository }}/security/code-scanning?query=is:open+ref:${{ steps.set-ref-and-sha.outputs.ref }}"
         fi
         if [[ '${{ inputs.ref }}' != '' ]]; then
           ref_message="for ref '${{ inputs.ref }}'"
