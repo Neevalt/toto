@@ -102,12 +102,12 @@ jobs:
     steps:
       - name: Validate inputs
         run: |
-          if [[ '{{ inputs.branch-regex }}' != *'%(date)'* ]]; then
+          if [[ '{{ inputs.branch-regex }}' != *"%(date)"* ]]; then
             echo "::error::Input 'branch-regex' must contain exactly the string '%(date)', '${{ inputs.branch-regex }}' was provided."
             exit 1
           fi
 
-          if [[ '${{ inputs.image-template }}' != *'%(date)'* ]]; then
+          if [[ '${{ inputs.image-template }}' != *"%(date)"* ]]; then
             echo "::error::Input 'image-template' must contain exactly the string '%(date)', '${{ inputs.image-template }}' was provided."
             exit 1
           fi
