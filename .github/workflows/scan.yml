@@ -75,11 +75,11 @@ jobs:
       - name: Validate inputs
         run: |
           if [[ "${{ inputs.branch-regex }}" != *"%(date)"* ]]; then
-            echo "::error::Input 'ref-template' must contain '%(date)'"
+            echo "::error::Input 'branch-regex' must contain exactly the string '%(date)'"
           fi
 
           if [[ "${{ inputs.image-template }}" != *"%(date)"* ]]; then
-            echo "::error::Input 'ref-template' must contain '%(date)'"
+            echo "::error::Input 'image-template' must contain exactly the string '%(date)'"
           fi
 
       - name: Checkout repository
@@ -98,14 +98,14 @@ jobs:
         with:
           script: |
             const branchRegex = '${{ inputs.branch-regex }}';
-            const ltsPeriod = Number.parseInt("${{ inputs.lts-period }}");
-            const gitBranches = "${{ steps.output-branches.outputs.GIT_BRANCHES }}".split(',').map(branch => branch.trim());
+            const ltsPeriod = Number.parseInt('${{ inputs.lts-period }}');
+            const gitBranches = '${{ steps.output-branches.outputs.GIT_BRANCHES }}'.split(',').map(branch => branch.trim());
 
             const regex = new RegExp(`${branchRegex.replace('%(date)', '(\\d{4})(\\d{2})')}`);
             const matches = gitBranches.map(ref => ref.match(regex)).filter(result => !!result);
 
             if (matches.length === 0) {
-              throw new Error(`No matching ref was found`);
+              throw new Error('No matching branch was found');
             }
 
             const branches = matches.reduce((acc, match) => {
