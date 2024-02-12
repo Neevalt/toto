@@ -27,23 +27,23 @@ on:
       branch-regex:
         description: |
           Regex to describe branches pattern to scan.
-          "%(date)" must be used to indicated the YYYYmm position of the release date.
+          '%(date)' must be used to indicated the YYYYmm position of the release date.
           For instance '^v%(date)-release$'.
           Main branch is always added.
           Defaults to '^%(date)$''.
         type: string
         required: false
-        default: "^%(date)$"
+        default: '^%(date)$'
       image-template:
         description: |
           Template to describe images to scan.
           It is not a regex and should be an exact match.
-          "%(date)" must be used to indicated the YYYYmm position of the release date.
-          For instance "B-%(date)-release".
-          Defaults to "%(date)".
+          '%(date)' must be used to indicated the YYYYmm position of the release date.
+          For instance 'B-%(date)-release'.
+          Defaults to '%(date)'.
         type: string
         required: false
-        default: "%(date)"
+        default: '%(date)'
       scan-library-in-image:
         description: |
           Wether 'library' and 'os' scans should be both executed in the docker image or have 'library' scan executed using fs mode.
@@ -57,7 +57,7 @@ on:
           Defaults to repository directory.
         type: string
         required: false
-        default: "."
+        default: '.'
       main-branch:
         description: |
           Name of the main branch.
@@ -102,15 +102,15 @@ jobs:
     steps:
       - name: Validate inputs
         run: |
-          if [[ "${{ inputs.branch-regex }}" != *"%(date)"* ]]; then
+          if [[ '{{ inputs.branch-regex }}' != *'%(date)'* ]]; then
             echo "::error::Input 'branch-regex' must contain exactly the string '%(date)'."
           fi
 
-          if [[ "${{ inputs.image-template }}" != *"%(date)"* ]]; then
+          if [[ '${{ inputs.image-template }}' != *'%(date)'* ]]; then
             echo "::error::Input 'image-template' must contain exactly the string '%(date)'."
           fi
           
-          if [[ {{ inputs.slack-channels }} != '' && {{ secrets.SLACK_APP_TOKEN }} == '' ]]; then
+          if [[ '{{ inputs.slack-channels }}' != '' && '{{ secrets.SLACK_APP_TOKEN }}' == '' ]]; then
             echo "::error::Secret 'SLACK_APP_TOKEN' is mandatory if input 'slack-channels' is provided.'"
           fi
 

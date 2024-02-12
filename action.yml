@@ -1,5 +1,5 @@
 name: 'Trivy scan'
-description: "Scan repository and / or image to detect CVEs. Allows updating Github's security tab and send alert on slack channels"
+description: 'Scan repository and / or image to detect CVEs. Allows updating Github's security tab and send alert on slack channels'
 inputs:
   CONTAINER_REGISTRY_USER:
     description: Docker registry user.
@@ -62,15 +62,15 @@ inputs:
     required: false
 
 runs:
-  using: "composite"
+  using: composite
   steps:
     - name: Validate inputs
         run: |
-          if [[ ( "${{ inputs.scan-type }}" == 'fs' || "${{ inputs.upload-sarif}}" == 'true' ) && "${{ inputs.ref }}" == '' ]]; then
+          if [[ ( '${{ inputs.scan-type }}' == 'fs' || '${{ inputs.upload-sarif}}' == 'true' ) && '${{ inputs.ref }}' == '' ]]; then
             echo "::error::Input 'ref' must be filled if input 'scan-type' is set to 'fs' or uploading sarif"
           fi
 
-          if [[ {{ inputs.slack-channels }} != '' && {{ inputs.SLACK_APP_TOKEN }} == '' ]]; then
+          if [[ '{{ inputs.slack-channels }}' != '' && '{{ inputs.SLACK_APP_TOKEN }}' == '' ]]; then
             echo "::error::Input 'SLACK_APP_TOKEN' is mandatory if input 'slack-channels' is provided.'"
           fi
 
@@ -102,7 +102,7 @@ runs:
         alias trivy="docker run -v /var/run/docker.sock:/var/run/docker.sock -v $PWD:/results aquasec/trivy"
 
         # Scan docker image
-        trivy ${{ inputs.scan-type }} --exit-code 42 --scanners vuln --vuln-type ${{ inputs.vuln-type }} --format json --output "/results/trivy.json" ${{ inputs.scan-target }} || output_code=$?
+        trivy ${{ inputs.scan-type }} --exit-code 42 --scanners vuln --vuln-type ${{ inputs.vuln-type }} --format json --output /results/trivy.json ${{ inputs.scan-target }} || output_code=$?
 
         if [[ $output_code != '' && $output_code != 42  ]]; then
           exit $output_code
@@ -112,8 +112,8 @@ runs:
 
         if [[ $output_code == 42 ]]; then
           trivy convert --format table --output /results/trivy.txt /results/trivy.json
-          trivy_text_template='{{- $critical := 0 }}{{- $high := 0 }}{{- $medium := 0 }}{{- $low := 0 }}{{- range . }}{{- range .Vulnerabilities }}{{- if  eq .Severity "CRITICAL" }}{{- $critical = add $critical 1 }}{{- end }}{{- if  eq .Severity "HIGH" }}{{- $high = add $high 1 }}{{- end }}{{- if  eq .Severity "MEDIUM" }}{{- $medium = add $medium 1 }}{{- end }}{{- if  eq .Severity "LOW" }}{{- $low = add $low 1 }}{{- end }}{{- end }}{{- end }}{{- if gt $critical 0 }}🔥 Critical: {{ $critical }}{{- end }}{{- if gt $high 0 }} 🔴 High: {{ $high }}{{- end }}{{- if gt $medium 0 }} 🟠 Medium: {{ $medium }}{{- end }}{{- if gt $low 0 }} 🟡 Low: {{ $low }}{{- end }}'
-          echo "TRIVY_IMAGE_TXT=$(trivy convert --format template --template "$trivy_text_template" /results/trivy.json)" >> "$GITHUB_OUTPUT"
+          trivy_text_template='{{- $critical := 0 }}{{- $high := 0 }}{{- $medium := 0 }}{{- $low := 0 }}{{- range . }}{{- range .Vulnerabilities }}{{- if  eq .Severity 'CRITICAL' }}{{- $critical = add $critical 1 }}{{- end }}{{- if  eq .Severity 'HIGH' }}{{- $high = add $high 1 }}{{- end }}{{- if  eq .Severity 'MEDIUM' }}{{- $medium = add $medium 1 }}{{- end }}{{- if  eq .Severity 'LOW' }}{{- $low = add $low 1 }}{{- end }}{{- end }}{{- end }}{{- if gt $critical 0 }}🔥 Critical: {{ $critical }}{{- end }}{{- if gt $high 0 }} 🔴 High: {{ $high }}{{- end }}{{- if gt $medium 0 }} 🟠 Medium: {{ $medium }}{{- end }}{{- if gt $low 0 }} 🟡 Low: {{ $low }}{{- end }}'
+          echo "TRIVY_IMAGE_TXT=$(trivy convert --format template --template "$trivy_text_template" /results/trivy.json)" >> $GITHUB_OUTPUT
         fi
 
     - name: Upload sarif
@@ -128,7 +128,7 @@ runs:
       shell: bash
       run: |
         if [[ ${{ inputs.upload-sarif }} == 'true' ]]; then
-          tab_message="Github's security tab has been updated: ${{ github.server_url }}/${{ github.repository }}/security/code-scanning?query=is:open+ref:${{ github.ref }}"
+          tab_message='Github's security tab has been updated: ${{ github.server_url }}/${{ github.repository }}/security/code-scanning?query=is:open+ref:${{ github.ref }}'
         fi
         if [[ ${{ inputs.ref }} != '' ]]; then
           ref_message="for ref '${{ inputs.ref }}'"
@@ -139,5 +139,5 @@ runs:
         Found the following CVEs on repository '${{ github.repository }}' $ref_message
         ${{ steps.trivy-scan.outputs.TRIVY_IMAGE_TXT }}
         $tab_message" \
-             -H "Authorization: Bearer ${{ inputs.SLACK_APP_TOKEN }}" \
+             -H 'Authorization: Bearer ${{ inputs.SLACK_APP_TOKEN }}' \
              https://slack.com/api/files.upload
