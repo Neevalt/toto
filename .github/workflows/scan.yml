@@ -102,7 +102,7 @@ jobs:
     steps:
       - name: Validate inputs
         run: |
-          if [[ '{{ inputs.branch-regex }}' != *'%(date)'* ]]; then
+          if [[ '${{ inputs.branch-regex }}' != *'%(date)'* ]]; then
             echo "::error::Input 'branch-regex' must contain exactly the string '%(date)', '${{ inputs.branch-regex }}' was provided."
             exit 1
           fi
@@ -112,7 +112,7 @@ jobs:
             exit 1
           fi
           
-          if [[ '{{ inputs.slack-channels }}' != '' && '{{ secrets.SLACK_APP_TOKEN }}' == '' ]]; then
+          if [[ '${{ inputs.slack-channels }}' != '' && '${{ secrets.SLACK_APP_TOKEN }}' == '' ]]; then
             echo "::error::Secret 'SLACK_APP_TOKEN' is mandatory if input 'slack-channels' is provided.'"
             exit 1
           fi
