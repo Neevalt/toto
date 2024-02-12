@@ -1,5 +1,7 @@
-name: 'Trivy scan'
-description: 'Scan repository and / or image to detect CVEs. Allows updating Github's security tab and send alert on slack channels'
+name: Trivy scan
+description: |
+  Scan repository and / or image to detect CVEs.
+  Allows updating Github's security tab and send alert on slack channels.
 inputs:
   CONTAINER_REGISTRY_USER:
     description: Docker registry user.
