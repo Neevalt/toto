@@ -133,7 +133,7 @@ runs:
       shell: bash
       run: |
         if [[ '${{ inputs.upload-sarif }}' == 'true' ]]; then
-          tab_message="Github's security tab has been updated: ${{ github.server_url }}/${{ github.repository }}/security/code-scanning?query=is:open+ref:${{ github.ref }}"
+          tab_message="Github's security tab has been updated: ${{ github.server_url }}/${{ github.repository }}/security/code-scanning?query=is:open+ref:refs/$(git describe --all)"
         fi
         if [[ '${{ inputs.ref }}' != '' ]]; then
           ref_message="for ref '${{ inputs.ref }}'"
