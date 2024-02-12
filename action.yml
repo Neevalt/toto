@@ -132,10 +132,10 @@ runs:
       if: ${{ inputs.slack-channels != '' && hashFiles('trivy.txt') != '' }}
       shell: bash
       run: |
-        if [[ ${{ inputs.upload-sarif }} == 'true' ]]; then
+        if [[ '${{ inputs.upload-sarif }}' == 'true' ]]; then
           tab_message='Github's security tab has been updated: ${{ github.server_url }}/${{ github.repository }}/security/code-scanning?query=is:open+ref:${{ github.ref }}'
         fi
-        if [[ ${{ inputs.ref }} != '' ]]; then
+        if [[ '${{ inputs.ref }}' != '' ]]; then
           ref_message="for ref '${{ inputs.ref }}'"
         fi
         curl -F file=@trivy.txt \
