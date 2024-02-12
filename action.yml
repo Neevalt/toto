@@ -71,10 +71,12 @@ runs:
       run: |
         if [[ ( '${{ inputs.scan-type }}' == 'fs' || '${{ inputs.upload-sarif}}' == 'true' ) && '${{ inputs.ref }}' == '' ]]; then
           echo "::error::Input 'ref' must be filled if input 'scan-type' is set to 'fs' or uploading sarif"
+          exit 1
         fi
 
         if [[ '{{ inputs.slack-channels }}' != '' && '{{ inputs.SLACK_APP_TOKEN }}' == '' ]]; then
           echo "::error::Input 'SLACK_APP_TOKEN' is mandatory if input 'slack-channels' is provided.'"
+          exit 1
         fi
 
     - name: Checkout repository

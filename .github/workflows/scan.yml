@@ -30,10 +30,10 @@ on:
           '%(date)' must be used to indicated the YYYYmm position of the release date.
           For instance '^v%(date)-release$'.
           Main branch is always added.
-          Defaults to '^%(date)$''.
+          Defaults to '^%(date)$'.
         type: string
         required: false
-        default: '^%(date)$'
+        default: ^%(date)$
       image-template:
         description: |
           Template to describe images to scan.
@@ -102,7 +102,7 @@ jobs:
     steps:
       - name: Validate inputs
         run: |
-          if [[ '{{ inputs.branch-regex }}' != *"%(date)"* ]]; then
+          if [[ '{{ inputs.branch-regex }}' != *'%(date)'* ]]; then
             echo "::error::Input 'branch-regex' must contain exactly the string '%(date)', '${{ inputs.branch-regex }}' was provided."
             exit 1
           fi
