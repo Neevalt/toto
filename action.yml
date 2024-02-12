@@ -67,6 +67,7 @@ runs:
   using: composite
   steps:
     - name: Validate inputs
+      shell: bash
       run: |
         if [[ ( '${{ inputs.scan-type }}' == 'fs' || '${{ inputs.upload-sarif}}' == 'true' ) && '${{ inputs.ref }}' == '' ]]; then
           echo "::error::Input 'ref' must be filled if input 'scan-type' is set to 'fs' or uploading sarif"
