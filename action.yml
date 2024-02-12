@@ -121,10 +121,16 @@ runs:
           echo "TRIVY_IMAGE_TXT=$(trivy convert --format template --template "$trivy_text_template" /results/trivy.json)" >> $GITHUB_OUTPUT
         fi
 
+    - name: Set ref
+      id: set-ref
+      shell: bash
+      run: echo "ref=ref/$(git describe --all)" >> $GITHUB_OUTPUT
+
     - name: Upload sarif
       if: ${{ inputs.upload-sarif == 'true' }}
       uses: github/codeql-action/upload-sarif@v3
       with:
+        ref: ${{ steps.set-ref.outputs.ref }}
         sarif_file: 'trivy.sarif'
         category: ${{ inputs.vuln-type }}
 
@@ -133,7 +139,7 @@ runs:
       shell: bash
       run: |
         if [[ '${{ inputs.upload-sarif }}' == 'true' ]]; then
-          tab_message="Github's security tab has been updated: ${{ github.server_url }}/${{ github.repository }}/security/code-scanning?query=is:open+ref:refs/$(git describe --all)"
+          tab_message="Github's security tab has been updated: ${{ github.server_url }}/${{ github.repository }}/security/code-scanning?query=is:open+ref:refs/${{ steps.set-ref.outputs.ref }}"
         fi
         if [[ '${{ inputs.ref }}' != '' ]]; then
           ref_message="for ref '${{ inputs.ref }}'"
