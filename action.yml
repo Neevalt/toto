@@ -2,23 +2,29 @@ name: 'Trivy scan'
 description: "Scan repository and / or image to detect CVEs. Allows updating Github's security tab and send alert on slack channels"
 inputs:
   CONTAINER_REGISTRY_USER:
-    description: Docker registry user
+    description: Docker registry user.
     type: string
     required: true
   CONTAINER_REGISTRY_TOKEN:
-    description: Docker registry token
+    description: Docker registry token.
     type: string
     required: true
   SLACK_APP_TOKEN:
-    description: Token used to send messages on slack. Required if 'channels' is set
+    description: |
+      Token used to send messages on slack.
+      Required if 'channels' is set.
     type: string
     required: false
   ref:
-    description: Branch or tag the scan is associated to. Required if using 'fs' scan-type and / or uploading sarif.
+    description: |
+      Branch or tag the scan is associated to.
+      Required if using 'fs' scan-type and / or uploading sarif.
     type: string
     required: false
   scan-type: 
-    description: "Type of analysis: 'image' for docker images, 'fs' for files. Defaults to 'fs'"
+    description: |
+      Type of analysis: 'image' for docker images, 'fs' for files.
+      Defaults to 'fs'.
     required: false
     type: choice
     options: 
@@ -26,7 +32,9 @@ inputs:
       - image
     default: fs
   vuln-type: 
-    description: "Scan target: 'os' for base docker image, 'library' for dependencies, 'os,library' for both. Defaults to 'library'"
+    description: |
+      Scan target: 'os' for base docker image, 'library' for dependencies, 'os,library' for both.
+      Defaults to 'library'.
     required: false
     type: choice
     options: 
@@ -35,28 +43,42 @@ inputs:
       - os,library
     default: library
   scan-target:
-    description: Folder or docker image to scan. Defaults to respository folder
+    description: |
+      Folder or docker image to scan.
+      Defaults to respository folder.
     type: string
     required: false
     default: '.'
   upload-sarif:
-    description: Update Github's security tab with results. Defaults to true
+    description: |
+      Update Github's security tab with results.
+      Defaults to true.
     required: false
     type: boolean
     default: true
   slack-channels:
-    description: Comma separated slack channels to notify scan results. Leave empty to prevent alerts
+    description: Comma separated slack channels to notify scan results.
     type: string
     required: false
 
 runs:
   using: "composite"
   steps:
+    - name: Validate inputs
+        run: |
+          if [[ ( "${{ inputs.scan-type }}" == 'fs' || "${{ inputs.upload-sarif}}" == 'true' ) && "${{ inputs.ref }}" == '' ]]; then
+            echo "::error::Input 'ref' must be filled if input 'scan-type' is set to 'fs' or uploading sarif"
+          fi
+
+          if [[ {{ inputs.slack-channels }} != '' && {{ inputs.SLACK_APP_TOKEN }} == '' ]]; then
+            echo "::error::Input 'SLACK_APP_TOKEN' is mandatory if input 'slack-channels' is provided.'"
+          fi
+
     - name: Checkout repository
       if: ${{ inputs.ref != '' }}
       uses: actions/checkout@v4
       with:
-        ref: "${{ inputs.ref }}"
+        ref: ${{ inputs.ref }}
 
     - name: Login to Quay.io
       if: ${{ inputs.scan-type == 'image' }}
