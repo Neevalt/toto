@@ -196,19 +196,6 @@ jobs:
     strategy:
       matrix:  ${{ fromJSON(needs.setup.outputs.images-matrix) }}
     steps:
-      - name: Run image scan
-        uses: Neevalt/Toto@master
-        with:
-          ref: ${{ matrix.image.ref }}
-          scan-type: image
-          vuln-type: os
-          scan-target: ${{ matrix.image.name }}
-          upload-sarif: ${{ inputs.upload-sarif }}
-          slack-channels: ${{ inputs.slack-channels }}
-          CONTAINER_REGISTRY_USER: ${{ secrets.CONTAINER_REGISTRY_USER }}
-          CONTAINER_REGISTRY_TOKEN: ${{ secrets.CONTAINER_REGISTRY_TOKEN }}
-          SLACK_APP_TOKEN: ${{ secrets.SLACK_APP_TOKEN }}
-
       - name: Run libraries scan
         uses: Neevalt/Toto@master
         with:
@@ -216,6 +203,19 @@ jobs:
           scan-type: ${{ inputs.scan-library-in-image == 'true' && 'image' || 'fs' }}
           vuln-type: library
           scan-target: ${{ inputs.scan-library-in-image == 'true' && matrix.image.name || inputs.fs-scan-target }}
+          upload-sarif: ${{ inputs.upload-sarif }}
+          slack-channels: ${{ inputs.slack-channels }}
+          CONTAINER_REGISTRY_USER: ${{ secrets.CONTAINER_REGISTRY_USER }}
+          CONTAINER_REGISTRY_TOKEN: ${{ secrets.CONTAINER_REGISTRY_TOKEN }}
+          SLACK_APP_TOKEN: ${{ secrets.SLACK_APP_TOKEN }}
+      
+      - name: Run image scan
+        uses: Neevalt/Toto@master
+        with:
+          ref: ${{ matrix.image.ref }}
+          scan-type: image
+          vuln-type: os
+          scan-target: ${{ matrix.image.name }}
           upload-sarif: ${{ inputs.upload-sarif }}
           slack-channels: ${{ inputs.slack-channels }}
           CONTAINER_REGISTRY_USER: ${{ secrets.CONTAINER_REGISTRY_USER }}
