@@ -117,6 +117,8 @@ runs:
 
         echo '==============================================================================='
         echo "$output_code"
+        trivy ${{ inputs.scan-type }} --exit-code 42 --scanners vuln --vuln-type ${{ inputs.vuln-type }} ${{ inputs.scan-target }} || toto=$?
+        echo "$toto"
         echo '==============================================================================='
 
         if [[ $output_code == 42 ]]; then
