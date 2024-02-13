@@ -7,27 +7,29 @@ on:
 
 jobs:
   build:
-    name: Build
-    run: my-build.sh
-  output-image:
-    name: Set image in output
-    id: get-image
-    run: echo "image=$(bash get-image.sh)" >> $GITHUB_OUTPUT
-  scan-fs:
-    name: Scan filesystem
-    uses: evooq/image-scanner@v1
-    with:
-      scan-type: fs
-      vuln-type: library
-      slack-channels: XXXXXXXXXXXX
-  scan-image:
-    name: Scan image
-    uses: evooq/image-scanner@v1
-    with:
-      scan-type: image
-      vuln-type: os
-      scan-target: ${{ steps.output-image.outputs.image }}
-      slack-channels: XXXXXXXXXXXX
-      CONTAINER_REGISTRY_USER: ${{ secrets.CONTAINER_REGISTRY_USER }}
-      CONTAINER_REGISTRY_TOKEN: ${{ secrets.CONTAINER_REGISTRY_TOKEN }}
-      SLACK_APP_TOKEN: ${{ secrets.SLACK_APP_TOKEN }}
+    runs-on: ubuntu-22.04
+    steps: 
+      - name: Build
+        run: my-build.sh
+
+      - name: Set image in output
+        id: get-image
+        run: echo "image=$(bash get-image.sh)" >> $GITHUB_OUTPUT
+
+      - name: Scan filesystem
+        uses: evooq/image-scanner@v1
+        with:
+          scan-type: fs
+          vuln-type: library
+         slack-channels: XXXXXXXXXXXX
+         
+      - name: Scan image
+        uses: evooq/image-scanner@v1
+        with:
+          scan-type: image
+          vuln-type: os
+          scan-target: ${{ steps.output-image.outputs.image }}
+          slack-channels: XXXXXXXXXXXX
+          CONTAINER_REGISTRY_USER: ${{ secrets.CONTAINER_REGISTRY_USER }}
+          CONTAINER_REGISTRY_TOKEN: ${{ secrets.CONTAINER_REGISTRY_TOKEN }}
+          SLACK_APP_TOKEN: ${{ secrets.SLACK_APP_TOKEN }}

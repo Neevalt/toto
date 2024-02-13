@@ -10,13 +10,14 @@ jobs:
     runs-on: ubuntu-22.04
 
     strategy:
+      max-parallel: 1 # to ensure job execution order
       matrix:
         image:
-          - { ref: "master", name: "quay.io/evooq/montblanc:dev" }
           - { ref: "202308", name: "quay.io/evooq/montblanc-branch:202308-latest" }
           - { ref: "202309", name: "quay.io/evooq/montblanc-branch:202309-latest" }
           - { ref: "202310", name: "quay.io/evooq/montblanc-branch:202310-latest" }
           - { ref: "202312", name: "quay.io/evooq/montblanc-branch:202312-latest" }
+          - { ref: "master", name: "quay.io/evooq/montblanc:dev" }
 
     steps:
       - name: Scan image

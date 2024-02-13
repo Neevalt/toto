@@ -1,0 +1,29 @@
+name: Specific ref scan
+
+on:
+  workflow_dispatch: # Allow manual trigger
+    inputs:
+      ref:
+        description: |
+          Tag to scan.
+          Defaults to most recent tag.
+        type: string
+        required: false
+  schedule:
+    - cron: "0 7 * * *" # Every day at 7am GMT
+
+jobs:
+  daily-image-scan:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Get most recent tag
+        id: set-tag
+        run: echo "tag=$(git describe --tags --abbrev=0)" >> $GITHUB_OUTPUT
+
+      - name: Scan image
+        uses: evooq/image-scanner@v1
+        with:
+          ref: ${{ inputs.ref != '' && inputs.ref || steps.set-tag.outputs.tag }}
+          slack-channels: XXXXXXXXXXXX
+          SLACK_APP_TOKEN: ${{ secrets.SLACK_APP_TOKEN }}
