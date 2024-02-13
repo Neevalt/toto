@@ -159,8 +159,8 @@ runs:
         
         curl -F file=@trivy.txt \
              -F channels=${{ inputs.slack-channels }} \
-             -F initial_comment="Trivy scan : $emoji ${{ inputs.scan-type }} `toto` \`titi\`
-        Found the following CVEs on repository '${{ github.repository }}' for ref '${{ inputs.ref }}'
+             -F initial_comment="$emoji Trivy scan : \`${{ inputs.scan-type }}\` $emoji
+        Found the following CVEs on repository '${{ github.repository }}' for ref \`${{ inputs.ref }}\`
         ${{ steps.trivy-scan.outputs.TRIVY_IMAGE_TXT }}
         $tab_message" \
              -H 'Authorization: Bearer ${{ inputs.SLACK_APP_TOKEN }}' \
