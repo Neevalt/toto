@@ -82,8 +82,8 @@ runs:
     - name: Checkout repository
       # if: ${{ inputs.ref != '' }}
       uses: actions/checkout@v4
-      # with:
-      #   ref: ${{ inputs.ref }}
+      with:
+        ref: ${{ inputs.ref }}
 
     - name: Login to Quay.io
       if: ${{ inputs.scan-type == 'image' }}
