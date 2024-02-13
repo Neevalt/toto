@@ -152,13 +152,14 @@ runs:
       if: ${{ inputs.slack-channels != '' && hashFiles('trivy.txt') != '' }}
       shell: bash
       run: |
+        emoji=$([ '${{ inputs.scan-type }}' == 'image' ] && echo '🖼️' || echo '📂')
         if [[ '${{ inputs.upload-sarif }}' == 'true' ]]; then
           tab_message="Github's security tab has been updated: ${{ github.server_url }}/${{ github.repository }}/security/code-scanning?query=is:open+ref:${{ steps.set-ref-and-sha.outputs.ref }}"
         fi
         
         curl -F file=@trivy.txt \
              -F channels=${{ inputs.slack-channels }} \
-             -F initial_comment="Trivy scan : ${{ inputs.scan-type }}
+             -F initial_comment="Trivy scan : $emoji ${{ inputs.scan-type }}
         Found the following CVEs on repository '${{ github.repository }}' for ref '${{ inputs.ref }}'
         ${{ steps.trivy-scan.outputs.TRIVY_IMAGE_TXT }}
         $tab_message" \
