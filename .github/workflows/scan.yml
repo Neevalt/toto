@@ -194,6 +194,7 @@ jobs:
     needs: setup
     runs-on: ubuntu-22.04
     strategy:
+      max-parallel: 1 # to ensure job execution order
       matrix:  ${{ fromJSON(needs.setup.outputs.images-matrix) }}
     steps:
       - name: Run libraries scan

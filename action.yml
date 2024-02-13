@@ -4,13 +4,17 @@ description: |
   Allows updating Github's security tab and send alert on slack channels.
 inputs:
   CONTAINER_REGISTRY_USER:
-    description: Docker registry user.
+    description: |
+      Docker registry user.
+      Required if using image scan.
     type: string
-    required: true
+    required: false
   CONTAINER_REGISTRY_TOKEN:
-    description: Docker registry token.
+    description: |
+      Docker registry token.
+      Required if using image scan.
     type: string
-    required: true
+    required: false
   SLACK_APP_TOKEN:
     description: |
       Token used to send messages on slack.
@@ -72,7 +76,12 @@ runs:
       shell: bash
       run: |
         if [[ '${{ inputs.ref }}' == '' ]]; then
-          echo "::error::Input 'ref' was empty"
+          echo "::error::Input 'ref' was empty."
+          exit 1
+        fi
+
+        if [[ '${{ inputs.scan-type }}' == 'image' && ( '${{ inputs.CONTAINER_REGISTRY_USER}}' == '' || '${{ inputs.CONTAINER_REGISTRY_TOKEN }}' == '' ) ]]; then
+          echo "::error::Inputs 'CONTAINER_REGISTRY_USER' and 'CONTAINER_REGISTRY_TOKEN' are required if input 'scan-type' is set to 'image'."
           exit 1
         fi
 

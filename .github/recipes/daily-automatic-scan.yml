@@ -1,0 +1,15 @@
+name: Daily automatic scan
+
+on:
+  schedule:
+    - cron: "0 7 * * *" # Every day at 7am GMT
+
+jobs:
+  scan:
+    uses: evooq/image-scanner/.github/workflows/scan.yml@v1
+    secrets:
+      CONTAINER_REGISTRY_USER: ${{ secrets.CONTAINER_REGISTRY_USER }}
+      CONTAINER_REGISTRY_TOKEN: ${{ secrets.CONTAINER_REGISTRY_TOKEN }}
+      SLACK_APP_TOKEN: ${{ secrets.SLACK_APP_TOKEN }}
+    with:
+      slack-channels: XXXXXXXXXXXX
