@@ -152,7 +152,13 @@ runs:
       if: ${{ inputs.slack-channels != '' && hashFiles('trivy.txt') != '' }}
       shell: bash
       run: |
-        emoji=$([ '${{ inputs.scan-type }}' == 'image' ] && echo '🖼️' || echo '📂')
+        if [[ '${{ inputs.scan-type }}' == 'image' ]]; then
+          emoji='🖼️'
+        elif [[ '${{ inputs.scan-type }}' == 'fs' ]]; then
+          emoji='📂'
+        else
+          emoji='📂🖼️'
+        fi
         if [[ '${{ inputs.upload-sarif }}' == 'true' ]]; then
           tab_message="Github's security tab has been updated: ${{ github.server_url }}/${{ github.repository }}/security/code-scanning?query=is:open+ref:${{ steps.set-ref-and-sha.outputs.ref }}"
         fi
