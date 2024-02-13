@@ -20,9 +20,11 @@ inputs:
   ref:
     description: |
       Branch or tag the scan is associated to.
-      Required if using 'fs' scan-type and / or uploading sarif.
+      It is used to upload Github's security tab correctly when uploading sarif file.
+      Defaults to $GITHUB_REF, so is mandatory in cases where this value is not set.
     type: string
     required: false
+    default: ${{ github.ref }}
   scan-type: 
     description: |
       Type of analysis: 'image' for docker images, 'fs' for files.
@@ -69,21 +71,28 @@ runs:
     - name: Validate inputs
       shell: bash
       run: |
-        # if [[ ( '${{ inputs.scan-type }}' == 'fs' || '${{ inputs.upload-sarif}}' == 'true' ) && '${{ inputs.ref }}' == '' ]]; then
-        #   echo "::error::Input 'ref' must be filled if input 'scan-type' is set to 'fs' or uploading sarif"
-        #   exit 1
-        # fi
+        if [[ '${{ inputs.ref }}' == '' ]]; then
+          echo "::error::Input 'ref' was empty"
+          exit 1
+        fi
 
         if [[ '${{ inputs.slack-channels }}' != '' && '${{ inputs.SLACK_APP_TOKEN }}' == '' ]]; then
           echo "::error::Input 'SLACK_APP_TOKEN' is mandatory if input 'slack-channels' is provided.'"
           exit 1
         fi
+    
+    - name: Set ref
+      id: set-ref-and-sha
+      shell: bash
+      run: |
+        # Since input.ref can be a simple branch or tag name, use this command to get the full ref
+        echo "ref=refs/$(git describe --all)" >> $GITHUB_OUTPUT
+        echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
 
     - name: Checkout repository
-      # if: ${{ inputs.ref != '' }}
       uses: actions/checkout@v4
       with:
-        ref: ${{ inputs.ref }}
+        ref: ${{ steps.set-ref-and-sha.outputs.ref }}
 
     - name: Login to Quay.io
       if: ${{ inputs.scan-type == 'image' }}
@@ -121,13 +130,6 @@ runs:
           echo "TRIVY_IMAGE_TXT=$(trivy convert --format template --template "$trivy_text_template" /results/trivy.json)" >> $GITHUB_OUTPUT
         fi
 
-    - name: Set ref
-      id: set-ref-and-sha
-      shell: bash
-      run: |
-        echo "ref=refs/$(git describe --all)" >> $GITHUB_OUTPUT
-        echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
-
     - name: Upload sarif
       if: ${{ inputs.upload-sarif == 'true' }}
       uses: github/codeql-action/upload-sarif@v3
@@ -144,13 +146,11 @@ runs:
         if [[ '${{ inputs.upload-sarif }}' == 'true' ]]; then
           tab_message="Github's security tab has been updated: ${{ github.server_url }}/${{ github.repository }}/security/code-scanning?query=is:open+ref:${{ steps.set-ref-and-sha.outputs.ref }}"
         fi
-        if [[ '${{ inputs.ref }}' != '' ]]; then
-          ref_message="for ref '${{ inputs.ref }}'"
-        fi
+        
         curl -F file=@trivy.txt \
              -F channels=${{ inputs.slack-channels }} \
              -F initial_comment="Trivy scan : ${{ inputs.scan-type }}
-        Found the following CVEs on repository '${{ github.repository }}' $ref_message
+        Found the following CVEs on repository '${{ github.repository }}' for ref '${{ inputs.ref }}'
         ${{ steps.trivy-scan.outputs.TRIVY_IMAGE_TXT }}
         $tab_message" \
              -H 'Authorization: Bearer ${{ inputs.SLACK_APP_TOKEN }}' \
