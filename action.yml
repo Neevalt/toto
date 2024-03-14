@@ -136,7 +136,7 @@ runs:
           exit $output_code
         fi
 
-        echo "TRIVY_JSON=$(cat trivy.json)" >> $GITHUB_OUTPUT
+        echo "TRIVY_JSON=$(cat trivy.json | tr -d '\n')" >> $GITHUB_OUTPUT
         trivy convert --format sarif --output /results/trivy.sarif /results/trivy.json
 
         if [[ $output_code == 42 ]]; then
