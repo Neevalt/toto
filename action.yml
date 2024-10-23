@@ -24,7 +24,6 @@ inputs:
   ref:
     description: |
       Branch or tag the scan is associated to.
-      It is used to upload Github's security tab correctly when uploading sarif file.
       Defaults to $GITHUB_REF, so is mandatory in cases where this value is not set.
     type: string
     required: false
@@ -138,9 +137,6 @@ runs:
           emoji='🐋'
         else
           emoji='📂'
-        fi
-        if [[ '${{ inputs.upload-sarif }}' == 'true' ]]; then
-          tab_message="Github's security tab has been updated: ${{ github.server_url }}/${{ github.repository }}/security/code-scanning?query=is:open+ref:${{ steps.set-ref-and-sha.outputs.ref }}"
         fi
         
         curl -F file=@/results/trivy.txt \
