@@ -133,6 +133,7 @@ runs:
       if: ${{ inputs.slack-channels != '' && hashFiles('trivy.txt') != '' }}
       shell: bash
       run: |
+        ls
         if [[ '${{ inputs.scan-type }}' == 'image' ]]; then
           emoji='🐋'
         else
