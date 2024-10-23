@@ -129,6 +129,20 @@ runs:
         else
           echo "TRIVY_TXT=''"
         fi
+    
+    - name: Publish to Github summary
+      if: ${{ hashFiles('trivy.txt') != '' }}
+      shell: bash
+      run: |
+        {
+          echo "### Security Output"
+          echo "<details><summary>Click to expand</summary>"
+          echo ""
+          echo '```terraform'
+          cat trivy.txt
+          echo '```'
+          echo "</details>"
+        } >> $GITHUB_STEP_SUMMARY
 
     - name: Slack Notification
       if: ${{ inputs.slack-channels != '' && hashFiles('trivy.txt') != '' }}
