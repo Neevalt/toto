@@ -124,7 +124,8 @@ runs:
           echo "TRIVY_MESSAGE=$(trivy convert --format template --template "$trivy_text_template" /results/trivy.json)" >> $GITHUB_OUTPUT
 
           trivy convert --format table --output /results/trivy.txt /results/trivy.json
-          echo "TRIVY_TXT=$(cat trivy.txt)" >> $GITHUB_OUTPUT
+          # echo "TRIVY_TXT=$(cat trivy.txt)" >> $GITHUB_OUTPUT
+          echo "TRIVY_TXT=''"
         else
           echo "TRIVY_TXT=''"
         fi
