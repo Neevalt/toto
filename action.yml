@@ -129,6 +129,7 @@ runs:
         else
           echo "TRIVY_TXT=''"
         fi
+        echo "je passe ici" >> $GITHUB_STEP_SUMMARY
     
     - name: Publish to Github summary
       if: ${{ hashFiles('trivy.txt') != '' }}
@@ -148,7 +149,6 @@ runs:
       if: ${{ inputs.slack-channels != '' && hashFiles('trivy.txt') != '' }}
       shell: bash
       run: |
-        ls
         if [[ '${{ inputs.scan-type }}' == 'image' ]]; then
           emoji='🐋'
         else
