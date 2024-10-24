@@ -8,19 +8,6 @@ on:
         description: Comma separated slack channels to notify scan results.
         type: string
         required: false
-  # workflow_call:
-  #   secrets:
-  #     CONTAINER_REGISTRY_USER:
-  #       description: Docker registry user
-  #       required: true
-  #     CONTAINER_REGISTRY_TOKEN:
-  #       description: Docker registry token
-  #       required: true
-  #     SLACK_APP_TOKEN:
-  #       description: |
-  #         Token used to send messages on slack.
-  #         Required if 'channels' is set.
-  #       required: false
 
 jobs:
   setup:
@@ -52,10 +39,8 @@ jobs:
 
             // Create a regex to get all release branches from current and last year
             const year = new Date().getFullYear();
-            const releaseRegex = new RegExp(`(${year}|${year - 1})-Q(\d)`);
-            const allReleaseBranches = gitBranches.map(ref => ref.match(releaseRegex));
-
-            console.log(allReleaseBranches);
+            const releaseRegex = new RegExp(`(${year}|${year - 1})-Q(\\d)`);
+            const allReleaseBranches = gitBranches.filter(ref => ref.match(releaseRegex));
 
             if (allReleaseBranches.length === 0) {
               throw new Error('No matching branch was found');
@@ -63,7 +48,7 @@ jobs:
 
             // Get the number of months a release represents
             function releaseToMonth(name) {
-              const [year, quarter] = name.split(-);
+              const [year, quarter] = name.split('-');
               const yearNumber = Number(year);
               const quarterNumber = Number(quarter.at(1));
               return yearNumber * 12 + quarterNumber * 3;
@@ -92,7 +77,7 @@ jobs:
             return {
               result: [...results, { branch: 'master', image: 'quay.io/evooq/benzene:dev' }],
             };
-  
+
   scans:
     needs: setup
     runs-on: ubuntu-22.04
@@ -101,7 +86,7 @@ jobs:
       matrix:  ${{ fromJSON(needs.setup.outputs.images-matrix) }}
     steps:
       - name: Run libraries scan
-        uses: Neevalt/Toto@master
+        uses: evooq/security-scanning@v1
         with:
           ref: ${{ matrix.result.branch }}
           scan-type: fs
@@ -109,9 +94,9 @@ jobs:
           CONTAINER_REGISTRY_USER: ${{ secrets.CONTAINER_REGISTRY_USER }}
           CONTAINER_REGISTRY_TOKEN: ${{ secrets.CONTAINER_REGISTRY_TOKEN }}
           SLACK_APP_TOKEN: ${{ secrets.SLACK_APP_TOKEN }}
-      
+
       - name: Run image scan
-        uses: Neevalt/Toto@master
+        uses: evooq/security-scanning@v1
         with:
           scan-type: image
           scan-target: ${{ matrix.result.image }}
