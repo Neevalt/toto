@@ -54,7 +54,7 @@ inputs:
 outputs:
   trivy-json:
     description: "JSON formatted scan result"
-    value: ${{ steps.trivy-scan.outputs.TRIVY_TXT }}
+    value: ${{ steps.trivy-scan.outputs.TRIVY_JSON }}
 
 runs:
   using: composite
@@ -113,18 +113,16 @@ runs:
           exit $output_code
         fi
 
+        # Create output json file (without newlines) if needed by action users
+        echo "TRIVY_JSON=$(cat trivy.json | tr -d '\n')" >> $GITHUB_OUTPUT
+
         # If output code is 42, it means vulnerabilities have been found
         if [[ $output_code == 42 ]]; then
           trivy_text_template='{{- $critical := 0 }}{{- $high := 0 }}{{- $medium := 0 }}{{- $low := 0 }}{{- range . }}{{- range .Vulnerabilities }}{{- if  eq .Severity "CRITICAL" }}{{- $critical = add $critical 1 }}{{- end }}{{- if  eq .Severity "HIGH" }}{{- $high = add $high 1 }}{{- end }}{{- if  eq .Severity "MEDIUM" }}{{- $medium = add $medium 1 }}{{- end }}{{- if  eq .Severity "LOW" }}{{- $low = add $low 1 }}{{- end }}{{- end }}{{- end }}{{- if gt $critical 0 }}🔥 Critical: \`{{ $critical }}\`{{- end }}{{- if gt $high 0 }} 🔴 High: \`{{ $high }}\`{{- end }}{{- if gt $medium 0 }} 🟠 Medium: \`{{ $medium }}\`{{- end }}{{- if gt $low 0 }} 🟢 Low: \`{{ $low }}\`{{- end }}'
           echo "TRIVY_MESSAGE=$(trivy convert --format template --template "$trivy_text_template" /results/trivy.json)" >> $GITHUB_OUTPUT
 
           trivy convert --format table --output /results/trivy.txt /results/trivy.json
-          # echo "TRIVY_TXT=$(cat trivy.txt)" >> $GITHUB_OUTPUT
-          echo "TRIVY_TXT=''"
-        else
-          echo "TRIVY_TXT=''"
         fi
-        echo "je passe ici" >> $GITHUB_STEP_SUMMARY
     
     - name: Publish to Github summary
       if: ${{ hashFiles('trivy.txt') != '' }}
