@@ -1,98 +1,26 @@
 on:
-  workflow_call:
-    secrets:
-      CONTAINER_REGISTRY_USER:
-        description: Docker registry user
-        required: true
-      CONTAINER_REGISTRY_TOKEN:
-        description: Docker registry token
-        required: true
-      SLACK_APP_TOKEN:
-        description: |
-          Token used to send messages on slack.
-          Required if 'channels' is set.
-        required: false
+  workflow_dispatch:
     inputs:
-      upload-sarif:
-        description: |
-          Update Github's security tab with results.
-          Defaults to true.
+      releases:
+        description: Comma separated release branch names to scan. Defaults to last 3 releases if empty.
         required: false
-        type: boolean
-        default: true
       slack-channels:
         description: Comma separated slack channels to notify scan results.
         type: string
         required: false
-      branch-regex:
-        description: |
-          Regex to describe branches pattern to scan.
-          '%(date)' must be used to indicated the YYYYmm position of the release date.
-          For instance '^v%(date)-release$'.
-          Main branch is always added.
-          Defaults to '^%(date)$'.
-        type: string
-        required: false
-        default: ^%(date)$
-      image-template:
-        description: |
-          Template to describe images to scan.
-          It is not a regex and should be an exact match.
-          '%(date)' must be used to indicated the YYYYmm position of the release date.
-          For instance 'B-%(date)-release'.
-          Defaults to '%(date)'.
-        type: string
-        required: false
-        default: '%(date)'
-      scan-library-in-image:
-        description: |
-          Wether 'library' and 'os' scans should be both executed in the docker image or have 'library' scan executed using fs mode.
-          Defaults to 'false'.
-        type: boolean
-        required: false
-        default: false
-      fs-scan-target:
-        description: |
-          If 'scan-library-in-image' is set to 'false', target to scan libraries using the 'fs' mode.
-          Defaults to repository directory.
-        type: string
-        required: false
-        default: '.'
-      main-branch:
-        description: |
-          Name of the main branch.
-          Defaults to 'master'.
-        type: string
-        required: false
-        default: master
-      main-image:
-        description: |
-          Name of the image corresponding to main branch.
-          Defaults to 'dev'.
-        type: string
-        required: false
-        default: dev
-      main-repository:
-        description: |
-          Docker image repository for main branch.
-          Defaults to 'quay.io/{current-organization}/{current-repository}'.
-        type: string
-        required: false
-        default: quay.io/${{ github.repository }}
-      branch-repository:
-        description: |
-          Docker image repository for branches.
-          Defaults to 'quay.io/{current-organization}/{current-repository}-branch'.
-        type: string
-        required: false
-        default: quay.io/${{ github.repository }}-branch
-      lts-period:
-        description: |
-          Number of months supported.
-          Defaults to 4.
-        type: number
-        required: false
-        default: 4
+  # workflow_call:
+  #   secrets:
+  #     CONTAINER_REGISTRY_USER:
+  #       description: Docker registry user
+  #       required: true
+  #     CONTAINER_REGISTRY_TOKEN:
+  #       description: Docker registry token
+  #       required: true
+  #     SLACK_APP_TOKEN:
+  #       description: |
+  #         Token used to send messages on slack.
+  #         Required if 'channels' is set.
+  #       required: false
 
 jobs:
   setup:
@@ -100,23 +28,6 @@ jobs:
     outputs:
       images-matrix: ${{ steps.images-matrix.outputs.result }}
     steps:
-      - name: Validate inputs
-        run: |
-          if [[ '${{ inputs.branch-regex }}' != *'%(date)'* ]]; then
-            echo "::error::Input 'branch-regex' must contain exactly the string '%(date)', '${{ inputs.branch-regex }}' was provided."
-            exit 1
-          fi
-
-          if [[ '${{ inputs.image-template }}' != *"%(date)"* ]]; then
-            echo "::error::Input 'image-template' must contain exactly the string '%(date)', '${{ inputs.image-template }}' was provided."
-            exit 1
-          fi
-          
-          if [[ '${{ inputs.slack-channels }}' != '' && '${{ secrets.SLACK_APP_TOKEN }}' == '' ]]; then
-            echo "::error::Secret 'SLACK_APP_TOKEN' is mandatory if input 'slack-channels' is provided.'"
-            exit 1
-          fi
-
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -124,45 +35,46 @@ jobs:
 
       - name: Output git branches
         id: output-branches
+        shell: bash
         run: |
-          echo GIT_BRANCHES=$(git branch --remotes --format '%(refname:lstrip=3),') >> $GITHUB_OUTPUT
+          if [[ '${{ inputs.releases }}' != '' ]]; then
+            echo GIT_BRANCHES='${{ inputs.releases }}' >> $GITHUB_OUTPUT
+          else
+            echo GIT_BRANCHES=$(git branch --remotes --format '%(refname:lstrip=3),') >> $GITHUB_OUTPUT
+          fi
 
       - name: Set branches
         uses: actions/github-script@v7
         id: set-branches
         with:
           script: |
-            const branchRegex = '${{ inputs.branch-regex }}';
-            const ltsPeriod = Number.parseInt('${{ inputs.lts-period }}');
             const gitBranches = '${{ steps.output-branches.outputs.GIT_BRANCHES }}'.split(',').map(branch => branch.trim());
 
-            const regex = new RegExp(`${branchRegex.replace('%(date)', '(\\d{4})(\\d{2})')}`);
-            const matches = gitBranches.map(ref => ref.match(regex)).filter(result => !!result);
+            // Create a regex to get all release branches from current and last year
+            const year = new Date().getFullYear();
+            const releaseRegex = new RegExp(`(${year}|${year - 1})-Q(\d)`);
+            const allReleaseBranches = gitBranches.map(ref => ref.match(releaseRegex));
 
-            if (matches.length === 0) {
+            console.log(allReleaseBranches);
+
+            if (allReleaseBranches.length === 0) {
               throw new Error('No matching branch was found');
             }
 
-            const branches = matches.reduce((acc, match) => {
-              const year = Number.parseInt(match[1]);
-              const month = Number.parseInt(match[2]);
-              const currentYear = new Date().getFullYear();
-              const currentMonth = new Date().getMonth() + 1;
-              const totalMonths = year * 12 + month;
-              const totalCurrentMonths = currentYear * 12 + currentMonth;
+            // Get the number of months a release represents
+            function releaseToMonth(name) {
+              const [year, quarter] = name.split(-);
+              const yearNumber = Number(year);
+              const quarterNumber = Number(quarter.at(1));
+              return yearNumber * 12 + quarterNumber * 3;
+            }
 
-              if (totalCurrentMonths - totalMonths <= ltsPeriod) {
-                acc.push({
-                  name: match[0],
-                  year: match[1],
-                  month: match[2],
-                });
-              }
-              return acc;
-            }, []);
+            // Get last 3 releases
+            const sortedReleases = allReleaseBranches.sort((r1, r2) => releaseToMonth(r2) - releaseToMonth(r1));
+            const last3Releases = sortedReleases.slice(0, 3);
 
             return {
-              branches: [...branches, { name: '${{ inputs.main-branch }}' }],
+              branches: [...last3Releases],
             };
 
       - name: Set images matrix
@@ -170,24 +82,15 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const imageTemplate = '${{ inputs.image-template }}';
-            const branches = ${{ steps.set-branches.outputs.result }}.branches;
-            const mainBranch = '${{ inputs.main-branch }}';
-            const mainRepository = '${{ inputs.main-repository }}';
-            const mainImage = '${{ inputs.main-image }}';
-            const branchRepository = '${{ inputs.branch-repository }}';
+            const releases = ${{ steps.set-branches.outputs.result }}.branches;
 
-            const images = branches.map(branch => {
-              const repository = branch.name === mainBranch ? mainRepository : branchRepository;
-              const image = branch.name === mainBranch ? mainImage : imageTemplate.replace('%(date)', `${branch.year}${branch.month}`);
-              return {
-                ref: branch.name,
-                name: `${repository}:${image}`,
-              };
-            });
+            const results = releases.map(branch => ({
+                branch,
+                image: `quay.io/evooq/benzene-branch:B-${branch}`,
+            }));
 
             return {
-              image: images
+              result: [...results, { branch: 'master', image: 'quay.io/evooq/benzene:dev' }],
             };
   
   scans:
@@ -200,11 +103,8 @@ jobs:
       - name: Run libraries scan
         uses: Neevalt/Toto@master
         with:
-          ref: ${{ matrix.image.ref }}
-          scan-type: ${{ inputs.scan-library-in-image == 'true' && 'image' || 'fs' }}
-          vuln-type: library
-          scan-target: ${{ inputs.scan-library-in-image == 'true' && matrix.image.name || inputs.fs-scan-target }}
-          upload-sarif: ${{ inputs.upload-sarif }}
+          ref: ${{ matrix.result.branch }}
+          scan-type: fs
           slack-channels: ${{ inputs.slack-channels }}
           CONTAINER_REGISTRY_USER: ${{ secrets.CONTAINER_REGISTRY_USER }}
           CONTAINER_REGISTRY_TOKEN: ${{ secrets.CONTAINER_REGISTRY_TOKEN }}
@@ -213,11 +113,8 @@ jobs:
       - name: Run image scan
         uses: Neevalt/Toto@master
         with:
-          ref: ${{ matrix.image.ref }}
           scan-type: image
-          vuln-type: os
-          scan-target: ${{ matrix.image.name }}
-          upload-sarif: ${{ inputs.upload-sarif }}
+          scan-target: ${{ matrix.result.image }}
           slack-channels: ${{ inputs.slack-channels }}
           CONTAINER_REGISTRY_USER: ${{ secrets.CONTAINER_REGISTRY_USER }}
           CONTAINER_REGISTRY_TOKEN: ${{ secrets.CONTAINER_REGISTRY_TOKEN }}

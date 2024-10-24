@@ -23,8 +23,9 @@ inputs:
     required: false
   ref:
     description: |
-      Branch or tag the scan is associated to.
-      Defaults to $GITHUB_REF, so is mandatory in cases where this value is not set.
+      Branch or tag the scan is associated to. Only used when scanning scan-type is 'fs'.
+      Defaults to $GITHUB_REF, so is mandatory in cases where this value is not set,
+      for instance if this action is triggered by a scheduler.
     type: string
     required: false
     default: ${{ github.ref }}
@@ -77,18 +78,11 @@ runs:
         fi
 
     - name: Checkout repository
+      if: ${{ inputs.scan-type == 'fs' }}
       uses: actions/checkout@v4
       with:
         ref: ${{ inputs.ref }}
     
-    - name: Set ref
-      id: set-ref-and-sha
-      shell: bash
-      run: |
-        # Since input.ref can be a simple branch or tag name, use this command to get the full ref
-        echo "ref=refs/$(git describe --all)" >> $GITHUB_OUTPUT
-        echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
-
     - name: Login to Quay.io
       if: ${{ inputs.scan-type == 'image' }}
       uses: docker/login-action@v3
@@ -109,9 +103,10 @@ runs:
         # Enable aliases
         shopt -s expand_aliases
         alias trivy="docker run -v /var/run/docker.sock:/var/run/docker.sock -v $PWD:/results aquasec/trivy"
-
+        pkg_types=$([ "${{ inputs.scan-type }}" == "fs" ] && echo "library" || echo "os,library")
+        
         # Scan
-        trivy ${{ inputs.scan-type }} --exit-code 42 --scanners vuln --format json --output /results/trivy.json ${{ inputs.scan-target }} || output_code=$?
+        trivy ${{ inputs.scan-type }} --exit-code 42 --scanners vuln --pkg-types $pkg_types --format json --output /results/trivy.json ${{ inputs.scan-target }} || output_code=$?
 
         # If scan failed for other reasons than finding vulnerabilities, stop
         if [[ $output_code != '' && $output_code != 42 ]]; then
